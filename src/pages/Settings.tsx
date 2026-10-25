@@ -3,10 +3,13 @@ import { useRef, useState } from 'react';
 import { resetProgress, setState, toast, useStore } from '../store/progress';
 import { exportProgress, importProgress, syncNow } from '../store/sync';
 import { resetVfs } from '../runtime/vfs';
+import { useCourse } from '../store/course';
+import { navigate } from '../router';
 import { isPythonReady, pythonVersion, warmupPython } from '../runtime/runner';
 
 export function Settings() {
   const settings = useStore((s) => s.settings);
+  const course = useCourse();
   const set = <K extends keyof typeof settings>(k: K, v: (typeof settings)[K]) => setState((s) => void (s.settings[k] = v));
   const fileRef = useRef<HTMLInputElement>(null);
   const [pyStatus, setPyStatus] = useState(isPythonReady() ? `Python ${pythonVersion()} готов` : '');
@@ -39,12 +42,17 @@ export function Settings() {
       <section className="card">
         <div className="card-label">🎓 Обучение</div>
         <div className="setting">
-          <span>Основной язык</span>
-          <div className="lang-switch">
-            <button className={settings.preferredLang === 'python' ? 'active' : ''} onClick={() => set('preferredLang', 'python')}>🐍 Python</button>
-            <button className={settings.preferredLang === 'js' ? 'active' : ''} onClick={() => set('preferredLang', 'js')}>🟨 JavaScript</button>
-          </div>
+          <span>Курс: <b>{course ? `${course.icon} ${course.title}` : 'не выбран'}</b></span>
+          <button className="btn btn-sm" onClick={() => navigate('/courses')}>Сменить курс</button>
         </div>
+        <label className="setting">
+          <span>
+            Режим «только программирование»
+            <br />
+            <small className="muted">Скрывает мини-игры, собеседование и сезонные события — остаются курс, практика и инструменты.</small>
+          </span>
+          <input type="checkbox" checked={settings.focusMode} onChange={(e) => set('focusMode', e.target.checked)} />
+        </label>
         <label className="setting">
           <span>Quick Time Events во время уроков</span>
           <input type="checkbox" checked={settings.qte} onChange={(e) => set('qte', e.target.checked)} />

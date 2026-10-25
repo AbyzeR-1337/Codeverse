@@ -31,6 +31,10 @@ export interface Settings {
   syncUrl: string;
   syncToken: string;
   preferredLang: 'js' | 'python';
+  /** Выбранный курс ('' — ещё не выбран). */
+  course: '' | 'python' | 'js' | 'algo';
+  /** Режим «только программирование»: скрывает мини-игры, собеседование и сезонные события. */
+  focusMode: boolean;
   reducedMotion: boolean;
 }
 
@@ -107,6 +111,8 @@ function defaultState(): State {
       syncUrl: '',
       syncToken: '',
       preferredLang: 'python',
+      course: '',
+      focusMode: true,
       reducedMotion: false,
     },
   };

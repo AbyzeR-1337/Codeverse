@@ -3,8 +3,27 @@ import type { Chapter, Lesson, Module, Track } from '../types';
 import { basicsTrack } from './basics';
 import { pythonModules1 } from './python1';
 import { pythonModules2 } from './python2';
-import { jsTrack } from './javascript';
-import { algoTrack } from './algorithms';
+import { pythonExtraChapters } from './python3';
+import { pythonAdvancedModule, pythonExtraChapters2 } from './python4';
+import { jsTrack as jsBase } from './javascript';
+import { jsExtraChapters } from './javascript2';
+import { jsExtraChapters2 } from './javascript3';
+import { algoTrack as algoBase } from './algorithms';
+import { algoExtraModules } from './algorithms2';
+
+/** Добавляет углублённые главы в модули и убирает из дорожной карты то, что уже стало уроками.
+ *  Главы с id на «-0» встают в начало модуля, остальные — в конец. */
+function withExtras(modules: Module[], extras: Record<string, Chapter[]>[], done: string[] = []): Module[] {
+  return modules.map((m) => {
+    const added = extras.flatMap((e) => e[m.id] ?? []);
+    const first = added.filter((c) => c.id.endsWith('-0'));
+    const rest = added.filter((c) => !c.id.endsWith('-0'));
+    return { ...m, chapters: [...first, ...m.chapters.filter((c) => !done.includes(c.id)), ...rest] };
+  });
+}
+
+const pythonBase = withExtras([...pythonModules1, ...pythonModules2], [pythonExtraChapters, pythonExtraChapters2], ['py-adv']);
+const dataIdx = pythonBase.findIndex((m) => m.id === 'py-data');
 
 export const pythonTrack: Track = {
   id: 'python',
@@ -12,7 +31,16 @@ export const pythonTrack: Track = {
   icon: '🐍',
   color: '#4ade80',
   description: 'Самый дружелюбный язык для старта: автоматизация, боты, анализ данных, веб-серверы и нейросети. От print() до машинного обучения.',
-  modules: [...pythonModules1, ...pythonModules2],
+  modules: [...pythonBase.slice(0, dataIdx), pythonAdvancedModule, ...pythonBase.slice(dataIdx)],
+};
+
+export const jsTrack: Track = { ...jsBase, modules: withExtras(jsBase.modules, [jsExtraChapters, jsExtraChapters2]) };
+
+const algoImplemented = ['algo-two-pointers', 'algo-trees', 'algo-graphs', 'algo-dp', 'algo-greedy'];
+const algoRoadmap = algoBase.modules.filter((m) => !m.chapters.some((c) => c.lessons.length)).map((m) => ({ ...m, chapters: m.chapters.filter((c) => !algoImplemented.includes(c.id)) }));
+export const algoTrack: Track = {
+  ...algoBase,
+  modules: [...algoBase.modules.filter((m) => m.chapters.some((c) => c.lessons.length)), ...algoExtraModules, ...algoRoadmap],
 };
 
 export const TRACKS: Track[] = [basicsTrack, pythonTrack, jsTrack, algoTrack];

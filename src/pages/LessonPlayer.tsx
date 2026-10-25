@@ -2,6 +2,8 @@
 // неожиданные Quick Time Events, итоговый экран с результатом.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { findLesson, nextLesson } from '../content/course';
+import { courseOfLesson, nextInCourse } from '../content/courses';
+import { useCourse } from '../store/course';
 import { getState, setState, useStore } from '../store/progress';
 import { awardXp, bump, completeLesson, recordAnswer, track } from '../store/actions';
 import { isInteractive, StepView, STEP_LABELS } from '../components/Steps';
@@ -11,6 +13,8 @@ import { navigate } from '../router';
 
 export function LessonPlayer({ id }: { id: string }) {
   const ref = findLesson(id);
+  const current = useCourse();
+  const course = courseOfLesson(id, current);
   const savedStep = useStore((s) => s.lessonStep[id]);
   const qteEnabled = useStore((s) => s.settings.qte);
   const preferred = useStore((s) => s.settings.preferredLang);
@@ -39,7 +43,7 @@ export function LessonPlayer({ id }: { id: string }) {
     if (!qteEnabled || qteCount.current >= 2 || !ref) return;
     if (Math.random() < 0.22) {
       qteCount.current++;
-      const lang = ref.track.id === 'js' ? 'js' : ref.track.id === 'python' ? 'python' : preferred;
+      const lang = course?.lang ?? preferred;
       const topic = step?.topic;
       setTimeout(() => setQte(randomQuestion(lang, topic ? [topic] : undefined)), 400);
     }
@@ -92,7 +96,7 @@ export function LessonPlayer({ id }: { id: string }) {
   }
 
   if (finished) {
-    const nxt = nextLesson(id);
+    const nxt = course ? nextInCourse(course, id) : nextLesson(id);
     const result = getState().completedLessons[id];
     return (
       <div className="page lesson-finish">
@@ -114,7 +118,10 @@ export function LessonPlayer({ id }: { id: string }) {
             ) : (
               <button className="btn btn-primary btn-lg" onClick={() => navigate(`/exam/${ref.module.id}`)}>📜 Сдать экзамен по модулю</button>
             )}
-            <button className="btn" onClick={() => navigate('/learn?track=' + ref.track.id)}>К дорожной карте</button>
+            {nxt && nxt.module.id !== ref.module.id && ref.track.id !== 'basics' && (
+              <button className="btn" onClick={() => navigate(`/exam/${ref.module.id}`)}>📜 Экзамен по модулю «{ref.module.title}»</button>
+            )}
+            <button className="btn" onClick={() => navigate(course ? `/learn?course=${course.id}` : '/learn')}>К программе курса</button>
             <button className="btn btn-ghost" onClick={() => navigate('/practice')}>🎯 Потренироваться</button>
           </div>
         </div>
@@ -125,7 +132,7 @@ export function LessonPlayer({ id }: { id: string }) {
   return (
     <div className="lesson" ref={topRef}>
       <div className="lesson-top">
-        <button className="btn btn-ghost" onClick={() => navigate(`/learn?track=${ref.track.id}`)} aria-label="Выйти из урока">✕</button>
+        <button className="btn btn-ghost" onClick={() => navigate(course ? `/learn?course=${course.id}` : '/learn')} aria-label="Выйти из урока">✕</button>
         <div className="lesson-progress" aria-label={`Шаг ${idx + 1} из ${lesson.steps.length}`}>
           {stepsMeta.map((k, i) => (
             <button key={i} className={`seg ${i < idx || solved[i] ? 'done' : ''} ${i === idx ? 'cur' : ''}`} title={STEP_LABELS[k]} onClick={() => i <= idx && setIdx(i)} />

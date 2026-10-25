@@ -6,6 +6,7 @@ import { levelFromXp, levelTitle, onUi, UiEvent, useStore, xpForLevel } from './
 import { ACHIEVEMENTS } from './store/achievements';
 import { Home } from './pages/Home';
 import { Learn } from './pages/Learn';
+import { useCourse } from './store/course';
 
 const LessonPlayer = lazy(() => import('./pages/LessonPlayer').then((m) => ({ default: m.LessonPlayer })));
 const IDE = lazy(() => import('./pages/IDE').then((m) => ({ default: m.IDE })));
@@ -22,20 +23,22 @@ const Interview = lazy(() => import('./pages/Interview').then((m) => ({ default:
 const Exam = lazy(() => import('./pages/Exam').then((m) => ({ default: m.Exam })));
 const Profile = lazy(() => import('./pages/Profile').then((m) => ({ default: m.Profile })));
 const Handbook = lazy(() => import('./pages/Handbook').then((m) => ({ default: m.Handbook })));
+const Courses = lazy(() => import('./pages/Courses').then((m) => ({ default: m.Courses })));
 const Settings = lazy(() => import('./pages/Settings').then((m) => ({ default: m.Settings })));
 
-const NAV: { path: string; icon: string; label: string; mobile?: boolean }[] = [
+const NAV: { path: string; icon: string; label: string; mobile?: boolean; extra?: boolean }[] = [
   { path: '/', icon: '🏠', label: 'Главная', mobile: true },
-  { path: '/learn', icon: '🗺️', label: 'Обучение', mobile: true },
-  { path: '/practice', icon: '🎯', label: 'Тренировка' },
-  { path: '/problems', icon: '🧩', label: 'Задачник', mobile: true },
+  { path: '/learn', icon: '🗺️', label: 'Мой курс', mobile: true },
+  { path: '/practice', icon: '🎯', label: 'Тренировка', mobile: true },
+  { path: '/problems', icon: '🧩', label: 'Задачи' },
   { path: '/projects', icon: '🛠️', label: 'Проекты' },
-  { path: '/ide', icon: '💻', label: 'IDE', mobile: true },
-  { path: '/console', icon: '⌨️', label: 'Консоль' },
-  { path: '/games', icon: '🎮', label: 'Мини-игры' },
   { path: '/review', icon: '🔁', label: 'Повторение' },
-  { path: '/interview', icon: '🤝', label: 'Собеседование' },
+  { path: '/ide', icon: '💻', label: 'Редактор кода', mobile: true },
+  { path: '/console', icon: '⌨️', label: 'Консоль' },
   { path: '/handbook', icon: '📚', label: 'Справочник' },
+  { path: '/courses', icon: '🎓', label: 'Все курсы' },
+  { path: '/games', icon: '🎮', label: 'Мини-игры', extra: true },
+  { path: '/interview', icon: '🤝', label: 'Собеседование', extra: true },
   { path: '/profile', icon: '👤', label: 'Профиль', mobile: true },
   { path: '/settings', icon: '⚙️', label: 'Настройки' },
 ];
@@ -130,6 +133,19 @@ function XpBadge() {
   );
 }
 
+function CourseChip() {
+  const course = useCourse();
+  return (
+    <a className="course-chip" href="#/courses" style={{ ['--c' as string]: course?.color ?? 'var(--accent)' }} title="Сменить курс">
+      <span>{course?.icon ?? '🎓'}</span>
+      <span className="course-chip-text">
+        <small className="muted">Курс</small>
+        <b>{course?.short ?? 'Выбрать курс'}</b>
+      </span>
+    </a>
+  );
+}
+
 function Page({ parts }: { parts: string[] }) {
   const [p0, p1] = parts;
   switch (p0) {
@@ -169,6 +185,8 @@ function Page({ parts }: { parts: string[] }) {
       return <Handbook key={p1} id={p1} />;
     case 'settings':
       return <Settings />;
+    case 'courses':
+      return <Courses />;
     default:
       return (
         <div className="page center">
@@ -183,6 +201,8 @@ function Page({ parts }: { parts: string[] }) {
 export function App() {
   const { path, parts } = useRoute();
   const theme = useStore((s) => s.settings.theme);
+  const focusMode = useStore((s) => s.settings.focusMode);
+  const nav = NAV.filter((n) => !(focusMode && n.extra));
   const [menuOpen, setMenuOpen] = useState(false);
   const fullBleed = parts[0] === 'ide' || parts[0] === 'lesson';
 
@@ -201,8 +221,9 @@ export function App() {
           <span className="logo-text">CodeVerse</span>
         </a>
         <XpBadge />
+        <CourseChip />
         <nav>
-          {NAV.map((n) => (
+          {nav.map((n) => (
             <a key={n.path} href={`#${n.path}`} className={`nav-item ${active(n.path) ? 'active' : ''}`}>
               <span className="nav-icon">{n.icon}</span>
               <span>{n.label}</span>
@@ -226,7 +247,7 @@ export function App() {
         </Suspense>
       </main>
       <nav className="bottombar">
-        {NAV.filter((n) => n.mobile).map((n) => (
+        {nav.filter((n) => n.mobile).map((n) => (
           <a key={n.path} href={`#${n.path}`} className={active(n.path) ? 'active' : ''}>
             <span>{n.icon}</span>
             <small>{n.label}</small>

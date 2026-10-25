@@ -102,15 +102,18 @@ export function IDE() {
   const [previewDoc, setPreviewDoc] = useState('');
   const [logs, setLogs] = useState<{ at: number; file: string; ok: boolean; ms: number }[]>([]);
   const [status, setStatus] = useState('');
+  // Свой диалог ввода вместо window.prompt (в настольной версии prompt не поддерживается).
+  const [ask, setAsk] = useState<{ title: string; value: string; onOk: (v: string) => void } | null>(null);
   const viewRef = useRef<EditorView | null>(null);
 
+  const fileParam = query.get('file');
   useEffect(() => {
-    const q = query.get('file');
+    const q = fileParam;
     if (q && fs.exists(q) && !fs.isDir(q)) {
       setTabs((t) => (t.includes(q) ? t : [...t, q]));
       setActive(q);
     }
-  }, [query]);
+  }, [fileParam]);
 
   // Сообщения console.* из предпросмотра сайта.
   useEffect(() => {
@@ -220,10 +223,14 @@ export function IDE() {
     setPanel('debug');
   };
 
-  const newFile = (dirMode = false) => {
+  const newFile = (dirMode = false) =>
+    setAsk({
+      title: dirMode ? 'Имя новой папки' : 'Имя нового файла (например, game.py, app.js, index.html)',
+      value: dirMode ? 'new-folder' : 'main.py',
+      onOk: (name) => createEntry(name, dirMode),
+    });
+  const createEntry = (name: string, dirMode: boolean) => {
     const base = active ? fs.dirname(active) : fs.HOME;
-    const name = prompt(dirMode ? 'Имя новой папки:' : 'Имя нового файла (например, game.py, app.js, index.html):', dirMode ? 'new-folder' : 'main.py');
-    if (!name) return;
     const path = fs.resolvePath(name, base);
     try {
       if (dirMode) {
@@ -240,8 +247,10 @@ export function IDE() {
   };
   const renameFile = () => {
     if (!active) return;
-    const name = prompt('Новое имя:', active.split('/').pop());
-    if (!name) return;
+    setAsk({ title: 'Новое имя файла', value: active.split('/').pop() ?? '', onOk: renameTo });
+  };
+  const renameTo = (name: string) => {
+    if (!active) return;
     const target = fs.resolvePath(name, fs.dirname(active));
     try {
       fs.move(active, target);
@@ -404,6 +413,27 @@ export function IDE() {
         <aside className="ide-ai">
           <AiAssistant ctx={{ lang, code: content, lastError, stdin: stdin.split('\n') }} />
         </aside>
+      )}
+      {ask && (
+        <div className="modal-backdrop" onClick={() => setAsk(null)}>
+          <form
+            className="modal-card ask-dialog"
+            onClick={(e) => e.stopPropagation()}
+            onSubmit={(e) => {
+              e.preventDefault();
+              const v = ask.value.trim();
+              setAsk(null);
+              if (v) ask.onOk(v);
+            }}
+          >
+            <label>{ask.title}</label>
+            <input className="input" value={ask.value} onChange={(e) => setAsk({ ...ask, value: e.target.value })} autoFocus spellCheck={false} />
+            <div className="toolbar center">
+              <button type="button" className="btn" onClick={() => setAsk(null)}>Отмена</button>
+              <button className="btn btn-primary">OK</button>
+            </div>
+          </form>
+        </div>
       )}
       {showAi && active && lang !== 'js' && lang !== 'python' && (
         <aside className="ide-ai pad muted">ИИ-помощник работает с файлами .py и .js.</aside>

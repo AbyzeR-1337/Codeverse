@@ -1,0 +1,54 @@
+# Сборка настольной версии: Windows (.exe — установщик и портативная), macOS (.dmg), Linux (.AppImage).
+# Готовые файлы попадают в артефакты запуска и в GitHub Release «desktop-latest».
+name: Desktop build
+
+on:
+  push:
+    branches: [main, claude/keen-rubin-3m723r]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            script: dist:win
+            files: release/*.exe
+          - os: macos-latest
+            script: dist:mac
+            files: release/*.dmg
+          - os: ubuntu-latest
+            script: dist:linux
+            files: release/*.AppImage
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run ${{ matrix.script }} -- --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CodeVerse-${{ matrix.os }}
+          path: ${{ matrix.files }}
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: desktop-latest
+          name: CodeVerse для компьютера
+          body: |
+            Настольная версия CodeVerse.
+            **Windows:** `CodeVerse-Setup-*.exe` — установщик, `CodeVerse-Portable-*.exe` — запуск без установки.
+            **macOS:** `.dmg`. **Linux:** `.AppImage`.
+            Сборка не подписана сертификатом: Windows SmartScreen может предупредить — «Подробнее» → «Выполнить в любом случае».
+          prerelease: false
+          make_latest: true
+          files: ${{ matrix.files }}

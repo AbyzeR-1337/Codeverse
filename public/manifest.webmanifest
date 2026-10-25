@@ -1,0 +1,16 @@
+{
+  "name": "CodeVerse — учим программирование",
+  "short_name": "CodeVerse",
+  "description": "Интерактивная платформа по изучению JavaScript, Python и алгоритмов с нуля.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b0f1a",
+  "theme_color": "#0b0f1a",
+  "lang": "ru",
+  "categories": ["education", "developer"],
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

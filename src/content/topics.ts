@@ -1,0 +1,43 @@
+// Справочник тем: используется в статистике, карте навыков и адаптивных заданиях.
+
+export const TOPICS: Record<string, { title: string; icon: string }> = {
+  computer: { title: 'Как работает компьютер', icon: '🖥️' },
+  programs: { title: 'Программы и код', icon: '📜' },
+  memory: { title: 'Память', icon: '🧠' },
+  binary: { title: 'Двоичная система', icon: '0️⃣' },
+  files: { title: 'Файлы и папки', icon: '📁' },
+  terminal: { title: 'Терминал', icon: '⌨️' },
+  git: { title: 'Git', icon: '🌿' },
+  internet: { title: 'Интернет и HTTP', icon: '🌐' },
+  json: { title: 'JSON', icon: '🧾' },
+  output: { title: 'Вывод на экран', icon: '🖨️' },
+  variables: { title: 'Переменные', icon: '📦' },
+  types: { title: 'Типы данных', icon: '🔤' },
+  math: { title: 'Арифметика', icon: '➗' },
+  strings: { title: 'Строки', icon: '🧵' },
+  io: { title: 'Ввод данных', icon: '⌨️' },
+  conditions: { title: 'Условия', icon: '🔀' },
+  logic: { title: 'Логические операции', icon: '⚖️' },
+  loops: { title: 'Циклы', icon: '🔁' },
+  lists: { title: 'Списки', icon: '📋' },
+  arrays: { title: 'Массивы', icon: '📋' },
+  dicts: { title: 'Словари', icon: '📖' },
+  objects: { title: 'Объекты', icon: '🧱' },
+  functions: { title: 'Функции', icon: '🧩' },
+  scope: { title: 'Область видимости', icon: '🔭' },
+  recursion: { title: 'Рекурсия', icon: '🪆' },
+  classes: { title: 'Классы и ООП', icon: '🏛️' },
+  errors: { title: 'Обработка ошибок', icon: '🧯' },
+  async: { title: 'Асинхронность', icon: '⏳' },
+  dom: { title: 'DOM и веб-страницы', icon: '🕸️' },
+  modules: { title: 'Модули и пакеты', icon: '📦' },
+  syntax: { title: 'Синтаксис', icon: '✍️' },
+  algorithms: { title: 'Алгоритмы', icon: '🧮' },
+  sorting: { title: 'Сортировка', icon: '📶' },
+  search: { title: 'Поиск', icon: '🔎' },
+  complexity: { title: 'Сложность алгоритмов', icon: '⏱️' },
+  general: { title: 'Общее', icon: '✨' },
+};
+
+export const topicTitle = (t: string) => TOPICS[t]?.title ?? t;
+export const topicIcon = (t: string) => TOPICS[t]?.icon ?? '✨';
